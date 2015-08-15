@@ -8,6 +8,8 @@ using System.Linq;
 
 using Quartz.Spi;
 
+using SoftwareApproach.TestingExtensions;
+
 namespace Quartz.Impl.MongoDB.Tests
 {
     public class DailyIntervalTriggerSpecs

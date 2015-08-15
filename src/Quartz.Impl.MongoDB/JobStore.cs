@@ -1756,5 +1756,11 @@ namespace Quartz.Impl.MongoDB
         {
             return new Collection.HashSet<string>(this.PausedTriggerGroups.FindAllAs<string>());
         }
+
+
+        public bool CalendarExists(string calName)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
