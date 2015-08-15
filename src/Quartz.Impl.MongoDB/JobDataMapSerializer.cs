@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
+using MongoDB.Bson.IO;
 
 namespace Quartz.Impl.MongoDB
 {
     public class JobDataMapSerializer : IBsonSerializer
     {
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType, IBsonSerializationOptions options)
+        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
         {
             if (nominalType != typeof(JobDataMap) || actualType != typeof(JobDataMap))
             {
@@ -46,32 +47,12 @@ namespace Quartz.Impl.MongoDB
             }
         }
 
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, IBsonSerializationOptions options)
+        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
         {
-            return this.Deserialize(bsonReader, nominalType, nominalType, options);
+            return this.Deserialize(bsonReader, nominalType, nominalType);
         }
 
-        public IBsonSerializationOptions GetDefaultSerializationOptions()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool GetDocumentId(object document, out object id, out Type idNominalType, out IIdGenerator idGenerator)
-        {
-            throw new NotImplementedException();
-        }
-
-        public BsonSerializationInfo GetItemSerializationInfo()
-        {
-            throw new NotImplementedException();
-        }
-
-        public BsonSerializationInfo GetMemberSerializationInfo(string memberName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, object value, IBsonSerializationOptions options)
+        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, object value)
         {
             JobDataMap item = (JobDataMap)value;
             bsonWriter.WriteStartDocument();
@@ -85,9 +66,20 @@ namespace Quartz.Impl.MongoDB
             bsonWriter.WriteEndDocument();
         }
 
-        public void SetDocumentId(object document, object id)
+
+        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            throw new NotImplementedException();
+            return Deserialize((BsonReader)context.Reader, args.NominalType, args.NominalType);
+        }
+
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        {
+            Serialize((BsonWriter)context.Writer, args.NominalType, value);
+        }
+
+        public Type ValueType
+        {
+            get { return typeof(JobDataMap); }
         }
     }
 }

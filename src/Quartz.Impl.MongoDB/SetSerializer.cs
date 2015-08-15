@@ -15,31 +15,20 @@ namespace Quartz.Impl.MongoDB
             enumerableSerializer = BsonSerializer.LookupSerializer(typeof(IEnumerable<T>));
         }
 
-        public object Deserialize(BsonReader bsonReader, Type nominalType, IBsonSerializationOptions options)
+        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            return Deserialize(bsonReader, options);
-        }
-
-        public object Deserialize(BsonReader bsonReader, Type nominalType, Type actualType, IBsonSerializationOptions options)
-        {
-            return Deserialize(bsonReader, options);
-        }
-
-        private object Deserialize(BsonReader bsonReader, IBsonSerializationOptions options)
-        {
-            var enumerable = (IEnumerable<T>)enumerableSerializer.Deserialize(bsonReader, typeof(ISet<T>), typeof(HashSet<T>), options);
+            var enumerable = (IEnumerable<T>)enumerableSerializer.Deserialize(context, args);
             return new Quartz.Collection.HashSet<T>(enumerable);
         }
 
-        public IBsonSerializationOptions GetDefaultSerializationOptions()
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
         {
-            return enumerableSerializer.GetDefaultSerializationOptions();
+            enumerableSerializer.Serialize(context, args, value);
         }
 
-        public void Serialize(BsonWriter bsonWriter, Type nominalType, object value, IBsonSerializationOptions options)
+        public Type ValueType
         {
-            var hashSet = (Collection.HashSet<T>)value;
-            enumerableSerializer.Serialize(bsonWriter, typeof(ISet<T>), new HashSet<T>(hashSet), options);
+            get { throw new NotImplementedException(); }
         }
     }
 }

@@ -35,6 +35,7 @@ using MongoDB.Driver.Builders;
 using Quartz.Impl.Matchers;
 using Quartz.Impl.Triggers;
 using Quartz.Spi;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace Quartz.Impl.MongoDB
 {
@@ -809,8 +810,7 @@ namespace Quartz.Impl.MongoDB
 
             lock (lockObject)
             {
-                if (this.Calendars.FindOneByIdAs<BsonDocument>(name) != null
-                    && replaceExisting == false)
+                if (this.Calendars.FindOneByIdAs<BsonDocument>(name) != null && replaceExisting == false)
                 {
                     throw new ObjectAlreadyExistsException(string.Format(CultureInfo.InvariantCulture, "Calendar with name '{0}' already exists.", name));
                 }

@@ -6,17 +6,18 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.IO;
 using Quartz.Impl.Calendar;
 
 namespace Quartz.Impl.MongoDB
 {
-    public class CalendarWrapper : IBsonSerializable
+    public class CalendarWrapper : IBsonSerializer
     {
         
         public string Name { get; set; }
         public ICalendar Calendar { get; set; }
 
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, IBsonSerializationOptions options)
+        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
         {
             CalendarWrapper item = new CalendarWrapper();
             
@@ -38,7 +39,7 @@ namespace Quartz.Impl.MongoDB
             return true;
         }
 
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, IBsonSerializationOptions options)
+        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType)
         {
             bsonWriter.WriteStartDocument();
             bsonWriter.WriteString("_id", this.Name);
@@ -48,9 +49,19 @@ namespace Quartz.Impl.MongoDB
             bsonWriter.WriteEndDocument();
         }
 
-        public void SetDocumentId(object id)
+        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            throw new NotImplementedException();
+            return Deserialize((BsonReader)context.Reader, args.NominalType);
+        }
+
+        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        {
+            Serialize((BsonWriter)context.Writer, args.NominalType);
+        }
+
+        public Type ValueType
+        {
+            get { return typeof(CalendarWrapper); }
         }
     }
 }
