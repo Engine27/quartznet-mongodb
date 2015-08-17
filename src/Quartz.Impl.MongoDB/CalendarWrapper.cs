@@ -17,19 +17,6 @@ namespace Quartz.Impl.MongoDB
         public string Name { get; set; }
         public ICalendar Calendar { get; set; }
 
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
-        {
-            CalendarWrapper item = new CalendarWrapper();
-            
-            bsonReader.ReadStartDocument();
-            item.Name = bsonReader.ReadString("_id");
-            var binaryData = bsonReader.ReadBinaryData("ContentStream");
-            item.Calendar = (ICalendar)new BinaryFormatter().Deserialize(new MemoryStream(binaryData.Bytes));
-            bsonReader.ReadEndDocument();
-            
-            return item;
-        }
-
         public bool GetDocumentId(out object id, out Type idNominalType, out IIdGenerator idGenerator)
         {
             id = this.Name;
@@ -39,29 +26,39 @@ namespace Quartz.Impl.MongoDB
             return true;
         }
 
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType)
-        {
-            bsonWriter.WriteStartDocument();
-            bsonWriter.WriteString("_id", this.Name);
-            MemoryStream stream = new MemoryStream();
-            new BinaryFormatter().Serialize(stream, this.Calendar);
-            bsonWriter.WriteBinaryData("ContentStream", new BsonBinaryData(stream.ToArray(), BsonBinarySubType.Binary));
-            bsonWriter.WriteEndDocument();
-        }
-
         public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            return Deserialize((BsonReader)context.Reader, args.NominalType);
+            BsonReader bsonReader = (BsonReader)context.Reader;
+
+            CalendarWrapper item = new CalendarWrapper();
+
+            bsonReader.ReadStartDocument();
+            item.Name = bsonReader.ReadString(ID);
+            var binaryData = bsonReader.ReadBinaryData(CONTENT_STREAM);
+            item.Calendar = (ICalendar)new BinaryFormatter().Deserialize(new MemoryStream(binaryData.Bytes));
+            bsonReader.ReadEndDocument();
+
+            return item;
         }
 
         public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
         {
-            Serialize((BsonWriter)context.Writer, args.NominalType);
+            BsonWriter bsonWriter = (BsonWriter)context.Writer;
+
+            bsonWriter.WriteStartDocument();
+            bsonWriter.WriteString(ID, this.Name);
+            MemoryStream stream = new MemoryStream();
+            new BinaryFormatter().Serialize(stream, this.Calendar);
+            bsonWriter.WriteBinaryData(CONTENT_STREAM, new BsonBinaryData(stream.ToArray(), BsonBinarySubType.Binary));
+            bsonWriter.WriteEndDocument();
         }
 
         public Type ValueType
         {
             get { return typeof(ICalendar); }
         }
+
+        private static string ID = "_id";
+        private static string CONTENT_STREAM = "ContentStream";
     }
 }

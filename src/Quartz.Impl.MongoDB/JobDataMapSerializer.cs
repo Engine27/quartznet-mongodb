@@ -11,11 +11,15 @@ namespace Quartz.Impl.MongoDB
 {
     public class JobDataMapSerializer : SerializerBase<JobDataMap>
     {
-        public JobDataMap Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public override JobDataMap Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
+            BsonReader bsonReader = (BsonReader)context.Reader;
+            Type nominalType = args.NominalType;
+            Type actualType = args.NominalType;
+
             if (nominalType != typeof(JobDataMap) || actualType != typeof(JobDataMap))
             {
-                var message = string.Format("Can't deserialize a {0} with {1}.", nominalType.FullName, this.GetType().Name);
+                var message = string.Format(DESERIALIZE_ERROR, nominalType.FullName, this.GetType().Name);
                 throw new BsonSerializationException(message);
             }
 
@@ -43,18 +47,14 @@ namespace Quartz.Impl.MongoDB
             }
             else
             {
-                var message = string.Format("Can't deserialize a {0} from BsonType {1}.", nominalType.FullName, bsonType);
+                var message = string.Format(DESERIALIZE_ERROR_BSON, nominalType.FullName, bsonType);
                 throw new BsonSerializationException(message);
             }
         }
 
-        public JobDataMap Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, JobDataMap value)
         {
-            return this.Deserialize(bsonReader, nominalType, nominalType);
-        }
-
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, JobDataMap value)
-        {
+            BsonWriter bsonWriter = (BsonWriter)context.Writer;
             JobDataMap item = (JobDataMap)value;
             bsonWriter.WriteStartDocument();
 
@@ -63,19 +63,11 @@ namespace Quartz.Impl.MongoDB
                 bsonWriter.WriteName(key);
                 BsonSerializer.Serialize(bsonWriter, item[key]);
             }
-            
+
             bsonWriter.WriteEndDocument();
         }
 
-
-        public override JobDataMap Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-        {
-            return Deserialize((BsonReader)context.Reader, args.NominalType, args.NominalType);
-        }
-
-        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, JobDataMap value)
-        {
-            Serialize((BsonWriter)context.Writer, args.NominalType, value);
-        }
+        private static string DESERIALIZE_ERROR = "Can't deserialize a {0} with {1}.";
+        private static string DESERIALIZE_ERROR_BSON = "Can't deserialize a {0} from BsonType {1}.";
     }
 }

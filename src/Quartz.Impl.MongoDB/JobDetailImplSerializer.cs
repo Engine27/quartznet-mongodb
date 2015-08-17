@@ -12,22 +12,25 @@ namespace Quartz.Impl.MongoDB
 {
     public class JobDetailImplSerializer : SerializerBase<IJobDetail>
     {
-        public IJobDetail Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public override IJobDetail Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
+            BsonReader bsonReader = (BsonReader)context.Reader;
+            Type nominalType = args.NominalType;
+
             var bsonType = bsonReader.GetCurrentBsonType();
             if (bsonType == BsonType.Document)
             {
                 bsonReader.ReadStartDocument();
 
                 BsonSerializer.Deserialize(bsonReader, typeof(JobKey));
-                bsonReader.ReadString("_t");
-                
-                Assembly assembly = Assembly.Load(bsonReader.ReadString("_assembly"));
-                Type jobType = assembly.GetType(bsonReader.ReadString("_class"));
-                string name = bsonReader.ReadString("Name");
-                string group = bsonReader.ReadString("Group");
-                bool requestRecovery = bsonReader.ReadBoolean("RequestRecovery");
-                bool durable = bsonReader.ReadBoolean("Durable");
+                bsonReader.ReadString(TYPE);
+
+                Assembly assembly = Assembly.Load(bsonReader.ReadString(ASSEMBLY));
+                Type jobType = assembly.GetType(bsonReader.ReadString(CLASS));
+                string name = bsonReader.ReadString(NAME);
+                string group = bsonReader.ReadString(GROUP);
+                bool requestRecovery = bsonReader.ReadBoolean(REQUEST_RECOVERY);
+                bool durable = bsonReader.ReadBoolean(DURABLE);
 
                 IJobDetail jobDetail = new JobDetailImpl(name, group, jobType, durable, requestRecovery);
 
@@ -52,34 +55,31 @@ namespace Quartz.Impl.MongoDB
             }
             else
             {
-                var message = string.Format("Can't deserialize a {0} from BsonType {1}.", nominalType.FullName, bsonType);
+                var message = string.Format(DESERIALIZE_ERROR_MESSAGE, nominalType.FullName, bsonType);
                 throw new BsonSerializationException(message);
             }
         }
 
-        public IJobDetail Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, IJobDetail value)
         {
-            return this.Deserialize(bsonReader, nominalType, nominalType);
-        }
+            BsonWriter bsonWriter = (BsonWriter)context.Writer;
 
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, object value)
-        {
             JobDetailImpl item = (JobDetailImpl)value;
             bsonWriter.WriteStartDocument();
 
-            bsonWriter.WriteName("_id");
+            bsonWriter.WriteName(ID);
             BsonSerializer.Serialize<JobKey>(bsonWriter, item.Key);
 
-            bsonWriter.WriteString("_t", "JobDetailImpl");
-            bsonWriter.WriteString("_assembly", item.JobType.Assembly.FullName);
-            bsonWriter.WriteString("_class", item.JobType.FullName);
+            bsonWriter.WriteString(TYPE, INSTANCE);
+            bsonWriter.WriteString(ASSEMBLY, item.JobType.Assembly.FullName);
+            bsonWriter.WriteString(CLASS, item.JobType.FullName);
 
-            bsonWriter.WriteString("Name", item.Name);
-            bsonWriter.WriteString("Group", item.Group);
-            bsonWriter.WriteBoolean("RequestRecovery", item.RequestsRecovery);
-            bsonWriter.WriteBoolean("Durable", item.Durable);
+            bsonWriter.WriteString(NAME, item.Name);
+            bsonWriter.WriteString(GROUP, item.Group);
+            bsonWriter.WriteBoolean(REQUEST_RECOVERY, item.RequestsRecovery);
+            bsonWriter.WriteBoolean(DURABLE, item.Durable);
 
-            bsonWriter.WriteName("JobDataMap");
+            bsonWriter.WriteName(JOB_DATA_MAP);
             BsonSerializer.Serialize(bsonWriter, item.JobDataMap);
 
             /*bsonWriter.WriteName("Description");
@@ -88,14 +88,17 @@ namespace Quartz.Impl.MongoDB
             bsonWriter.WriteEndDocument();
         }
 
-        public override IJobDetail Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-        {
-            return Deserialize((BsonReader)context.Reader, args.NominalType);
-        }
+        private static string DESERIALIZE_ERROR_MESSAGE = "Can't deserialize a {0} from BsonType {1}.";
 
-        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, IJobDetail value)
-        {
-            Serialize((BsonWriter)context.Writer, args.NominalType, value);
-        }
+        private static string ID = "_id";
+        private static string TYPE = "_t";
+        private static string INSTANCE = "JobDetailImpl";
+        private static string ASSEMBLY = "_assembly";
+        private static string CLASS = "_class";
+        private static string NAME = "Name";
+        private static string GROUP = "Group";
+        private static string REQUEST_RECOVERY = "RequestRecovery";
+        private static string DURABLE = "Durable";
+        private static string JOB_DATA_MAP = "JobDataMap";
     }
 }

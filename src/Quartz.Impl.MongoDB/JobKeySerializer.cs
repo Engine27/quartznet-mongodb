@@ -11,11 +11,15 @@ namespace Quartz.Impl.MongoDB
 {
     public class JobKeySerializer : SerializerBase<JobKey>
     {
-        public JobKey Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public override JobKey Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
+            Type nominalType = args.NominalType;
+            Type actualType = args.NominalType;
+            BsonReader bsonReader = (BsonReader)context.Reader;
+
             if (nominalType != typeof(JobKey) || actualType != typeof(JobKey))
             {
-                var message = string.Format("Can't deserialize a {0} from {1}.", nominalType.FullName, this.GetType().Name);
+                var message = string.Format(DESERIALIZE_ERROR, nominalType.FullName, this.GetType().Name);
                 throw new BsonSerializationException(message);
             }
 
@@ -23,11 +27,11 @@ namespace Quartz.Impl.MongoDB
             if (bsonType == BsonType.Document)
             {
                 JobKey item;
-                
+
                 bsonReader.ReadStartDocument();
                 item = new JobKey(
-                    bsonReader.ReadString("Name"),
-                    bsonReader.ReadString("Group"));
+                    bsonReader.ReadString(NAME),
+                    bsonReader.ReadString(GROUP));
                 bsonReader.ReadEndDocument();
 
                 return item;
@@ -39,35 +43,24 @@ namespace Quartz.Impl.MongoDB
             }
             else
             {
-                var message = string.Format("Can't deserialize a {0} from BsonType {1}.", nominalType.FullName, bsonType);
+                var message = string.Format(DESERIALIZE_ERROR, nominalType.FullName, bsonType);
                 throw new BsonSerializationException(message);
             }
-        }
-
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
-        {
-            return this.Deserialize(bsonReader, nominalType, nominalType);
-        }
-
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, object value)
-        {
-            JobKey item = (JobKey)value;
-
-            bsonWriter.WriteStartDocument();
-            bsonWriter.WriteString("Name", item.Name);
-            bsonWriter.WriteString("Group", item.Group);
-            bsonWriter.WriteEndDocument();
-        }
-
-        public override JobKey Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
-        {
-            return Deserialize((BsonReader)context.Reader, args.NominalType, args.NominalType);
         }
 
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, JobKey value)
         {
             BsonWriter  bsonWriter = (BsonWriter) context.Writer;
-            Serialize(bsonWriter, args.NominalType, value);
+            JobKey item = (JobKey)value;
+
+            bsonWriter.WriteStartDocument();
+            bsonWriter.WriteString(NAME, item.Name);
+            bsonWriter.WriteString(GROUP, item.Group);
+            bsonWriter.WriteEndDocument();
         }
+
+        private static string NAME = "Name";
+        private static string GROUP = "Group";
+        private static string DESERIALIZE_ERROR = "Can't deserialize a {0} from BsonType {1}.";
     }
 }

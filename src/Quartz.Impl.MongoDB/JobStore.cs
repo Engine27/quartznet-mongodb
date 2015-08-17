@@ -127,11 +127,6 @@ namespace Quartz.Impl.MongoDB
                 new TriggerKeySerializer()
             );
 
-            //BsonSerializer.RegisterSerializer(
-            //    typeof(JobDetailImpl),
-            //    new JobDetailImplSerializer()
-            //);
-
             BsonSerializer.RegisterSerializer(
                typeof(IJobDetail),
                new JobDetailImplSerializer()
@@ -141,7 +136,6 @@ namespace Quartz.Impl.MongoDB
             {
                 cm.AutoMap();
                 cm.SetDiscriminator("JobDetailImpl");
-                //cm.SetIdMember(cm.GetMemberMap(c => c.Key));
             });
 
 
@@ -208,6 +202,7 @@ namespace Quartz.Impl.MongoDB
             BsonClassMap.RegisterClassMap<DailyTimeIntervalTriggerImpl>(cm =>
             {
                 cm.AutoMap();
+                //TODO check field
                 //cm.MapField("complete");
                 cm.MapField("nextFireTimeUtc");
                 cm.MapField("previousFireTimeUtc");
@@ -218,6 +213,7 @@ namespace Quartz.Impl.MongoDB
             BsonClassMap.RegisterClassMap<SimpleTriggerImpl>(cm =>
             {
                 cm.AutoMap();
+                //TODO check field
                 //cm.MapField("complete");
                 cm.MapField("nextFireTimeUtc");
                 cm.MapField("previousFireTimeUtc");
@@ -705,7 +701,6 @@ namespace Quartz.Impl.MongoDB
         {
             lock (lockObject)
             {
-                Console.WriteLine("instance naam: " + instanceName + " " + Jobs.Count() + " " + jobKey.ToBsonDocument() + " nr jobs: " + Jobs.FindOneByIdAs<IJobDetail>(jobKey.ToBsonDocument()).ToJson());
                 return this.Jobs.FindOneByIdAs<IJobDetail>(jobKey.ToBsonDocument());
             }
         }

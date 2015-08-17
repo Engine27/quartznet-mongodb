@@ -13,9 +13,9 @@ namespace Quartz.Impl.MongoDB
         public override TimeOfDay Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             context.Reader.ReadStartDocument();
-            var hour = context.Reader.ReadInt32("Hour");
-            var minute = context.Reader.ReadInt32("Minute");
-            var second = context.Reader.ReadInt32("Second");
+            var hour = context.Reader.ReadInt32(HOUR);
+            var minute = context.Reader.ReadInt32(MINUTE);
+            var second = context.Reader.ReadInt32(SECOND);
             context.Reader.ReadEndDocument();
             return new TimeOfDay(hour, minute, second);
         }
@@ -24,10 +24,14 @@ namespace Quartz.Impl.MongoDB
         {
             TimeOfDay timeOfDAy = (TimeOfDay)value;
             context.Writer.WriteStartDocument();
-            context.Writer.WriteInt32("Hour", timeOfDAy.Hour);
-            context.Writer.WriteInt32("Minute", timeOfDAy.Minute);
-            context.Writer.WriteInt32("Second", timeOfDAy.Second);
+            context.Writer.WriteInt32(HOUR, timeOfDAy.Hour);
+            context.Writer.WriteInt32(MINUTE, timeOfDAy.Minute);
+            context.Writer.WriteInt32(SECOND, timeOfDAy.Second);
             context.Writer.WriteEndDocument();
         }
+
+        private static string HOUR = "Hour";
+        private static string MINUTE = "Minute";
+        private static string SECOND = "Second";
     }
 }
