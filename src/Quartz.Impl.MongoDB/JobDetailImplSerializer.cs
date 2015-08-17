@@ -14,12 +14,6 @@ namespace Quartz.Impl.MongoDB
     {
         public IJobDetail Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
         {
-            if (!nominalType.IsAssignableFrom(typeof(JobDetailImpl)) || actualType != typeof(JobDetailImpl))
-            {
-                var message = string.Format("Can't deserialize a {0} with {1}.", nominalType.FullName, this.GetType().Name);
-//                throw new BsonSerializationException(message);
-            }
-
             var bsonType = bsonReader.GetCurrentBsonType();
             if (bsonType == BsonType.Document)
             {
@@ -75,8 +69,6 @@ namespace Quartz.Impl.MongoDB
 
             bsonWriter.WriteName("_id");
             BsonSerializer.Serialize<JobKey>(bsonWriter, item.Key);
-            //string jsonKey = item.Key.ToJson();
-            //bsonWriter.WriteString("_id", jsonKey);
 
             bsonWriter.WriteString("_t", "JobDetailImpl");
             bsonWriter.WriteString("_assembly", item.JobType.Assembly.FullName);

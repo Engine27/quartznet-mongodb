@@ -371,8 +371,9 @@ namespace Quartz.Impl.MongoDB
         /// <returns></returns>
         public virtual bool IsJobGroupPaused(string groupName)
         {
-            var result = this.PausedJobGroups.FindOneByIdAs<BsonDocument>(groupName);
-            return !result.IsBsonNull;
+            return PausedJobGroups.FindOneByIdAs<BsonDocument>(groupName) == null ? false : true;
+            //var result = this.PausedJobGroups.FindOneByIdAs<BsonDocument>(groupName);
+            //return !result.Value.IsBsonNull;
         }
 
         /// <summary>
@@ -382,8 +383,8 @@ namespace Quartz.Impl.MongoDB
         /// <returns></returns>
         public virtual bool IsTriggerGroupPaused(string groupName)
         {
-            var result = this.PausedTriggerGroups.FindOneByIdAs<BsonDocument>(groupName);
-            return !result.IsBsonNull;
+            return PausedTriggerGroups.FindOneByIdAs<BsonDocument>(groupName) == null ? false : true;
+            //return !result.IsBsonNull;
         }
 
         /// <summary>
@@ -704,10 +705,7 @@ namespace Quartz.Impl.MongoDB
         {
             lock (lockObject)
             {
-                Console.WriteLine("instance naam: " + instanceName + " " + Jobs.Count() + " " + jobKey.ToBsonDocument());
-                //return Jobs.FindOneByIdAs<JobDetailImpl>(ObjectId.Parse("55d0b7388811894ca48d2c8f"));
-                //return this.Jobs.FindOneByIdAs<IJobDetail>("group1.job1");
-                //return Jobs.FindAllAs<IJobDetail>().FirstOrDefault();
+                Console.WriteLine("instance naam: " + instanceName + " " + Jobs.Count() + " " + jobKey.ToBsonDocument() + " nr jobs: " + Jobs.FindOneByIdAs<IJobDetail>(jobKey.ToBsonDocument()).ToJson());
                 return this.Jobs.FindOneByIdAs<IJobDetail>(jobKey.ToBsonDocument());
             }
         }
