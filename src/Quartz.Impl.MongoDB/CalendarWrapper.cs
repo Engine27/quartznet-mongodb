@@ -61,7 +61,7 @@ namespace Quartz.Impl.MongoDB
 
         public Type ValueType
         {
-            get { return typeof(CalendarWrapper); }
+            get { return typeof(ICalendar); }
         }
     }
 }

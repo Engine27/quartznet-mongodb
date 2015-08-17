@@ -127,16 +127,23 @@ namespace Quartz.Impl.MongoDB
                 new TriggerKeySerializer()
             );
 
+            //BsonSerializer.RegisterSerializer(
+            //    typeof(JobDetailImpl),
+            //    new JobDetailImplSerializer()
+            //);
+
             BsonSerializer.RegisterSerializer(
-                typeof(JobDetailImpl),
-                new JobDetailImplSerializer()
-            );
+               typeof(IJobDetail),
+               new JobDetailImplSerializer()
+           );
 
             BsonClassMap.RegisterClassMap<JobDetailImpl>(cm =>
             {
                 cm.AutoMap();
                 cm.SetDiscriminator("JobDetailImpl");
+                //cm.SetIdMember(cm.GetMemberMap(c => c.Key));
             });
+
 
             BsonSerializer.RegisterSerializer(
                 typeof(JobDataMap),
@@ -176,7 +183,8 @@ namespace Quartz.Impl.MongoDB
             BsonClassMap.RegisterClassMap<CalendarIntervalTriggerImpl>(cm =>
             {
                 cm.AutoMap();
-                cm.MapField("complete");
+                //TODO check complete field -> gone in new quartz.net implementation?
+                //cm.MapField("complete");
                 cm.MapField("nextFireTimeUtc");
                 cm.MapField("previousFireTimeUtc");
                 cm.SetIgnoreExtraElements(true);
@@ -200,7 +208,7 @@ namespace Quartz.Impl.MongoDB
             BsonClassMap.RegisterClassMap<DailyTimeIntervalTriggerImpl>(cm =>
             {
                 cm.AutoMap();
-                cm.MapField("complete");
+                //cm.MapField("complete");
                 cm.MapField("nextFireTimeUtc");
                 cm.MapField("previousFireTimeUtc");
                 cm.MapField(x => x.TimeZone).SetSerializer(new TimeZoneInfoSerializer());
@@ -210,11 +218,12 @@ namespace Quartz.Impl.MongoDB
             BsonClassMap.RegisterClassMap<SimpleTriggerImpl>(cm =>
             {
                 cm.AutoMap();
-                cm.MapField("complete");
+                //cm.MapField("complete");
                 cm.MapField("nextFireTimeUtc");
                 cm.MapField("previousFireTimeUtc");
                 cm.SetIgnoreExtraElements(true);
             });
+
         }
 
         /// <summary> 
@@ -695,8 +704,11 @@ namespace Quartz.Impl.MongoDB
         {
             lock (lockObject)
             {
-                return this.Jobs
-                    .FindOneByIdAs<IJobDetail>(jobKey.ToBsonDocument());
+                Console.WriteLine("instance naam: " + instanceName + " " + Jobs.Count() + " " + jobKey.ToBsonDocument());
+                //return Jobs.FindOneByIdAs<JobDetailImpl>(ObjectId.Parse("55d0b7388811894ca48d2c8f"));
+                //return this.Jobs.FindOneByIdAs<IJobDetail>("group1.job1");
+                //return Jobs.FindAllAs<IJobDetail>().FirstOrDefault();
+                return this.Jobs.FindOneByIdAs<IJobDetail>(jobKey.ToBsonDocument());
             }
         }
 

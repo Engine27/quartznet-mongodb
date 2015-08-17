@@ -6,7 +6,6 @@ using Machine.Specifications;
 using Quartz.Impl.Triggers;
 using Quartz.Spi;
 
-using SoftwareApproach.TestingExtensions;
 
 namespace Quartz.Impl.MongoDB.Tests
 {
@@ -22,6 +21,7 @@ namespace Quartz.Impl.MongoDB.Tests
                     expectedNextFireTime = new DateTimeOffset(tomorrow, expectedTimeZone.GetUtcOffset(tomorrow));
 
                     jobStore = new JobStore();
+                    jobStore.InstanceName = "test_instance_name";
                     jobStore.ClearAllSchedulingData();
 
                     trigger =

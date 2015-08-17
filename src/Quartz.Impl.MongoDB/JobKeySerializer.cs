@@ -5,12 +5,13 @@ using System.Text;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace Quartz.Impl.MongoDB
 {
-    public class JobKeySerializer : IBsonSerializer
+    public class JobKeySerializer : SerializerBase<JobKey>
     {
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public JobKey Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
         {
             if (nominalType != typeof(JobKey) || actualType != typeof(JobKey))
             {
@@ -58,46 +59,15 @@ namespace Quartz.Impl.MongoDB
             bsonWriter.WriteEndDocument();
         }
 
-        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        public override JobKey Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            BsonReader bsonReader = (BsonReader)context.Reader;
-            var bsonType = bsonReader.CurrentBsonType;
-            if (bsonType == BsonType.Document)
-            {
-                JobKey item;
-                string name;
-                bsonReader.ReadName("Name");
-                name = bsonReader.ReadString();
-                string group;
-                bsonReader.ReadName("Group");
-                group = bsonReader.ReadString();
-                bsonReader.ReadStartDocument();
-                item = new JobKey(name, group);
-                bsonReader.ReadEndDocument();
-
-                return item;
-            }
-            else if (bsonType == BsonType.Null)
-            {
-                bsonReader.ReadNull();
-                return null;
-            }
-            else
-            {
-                var message = string.Format("Can't deserialize a {0} from BsonType {1}.", args.NominalType.FullName, bsonType);
-                throw new BsonSerializationException(message);
-            }
+            return Deserialize((BsonReader)context.Reader, args.NominalType, args.NominalType);
         }
 
-        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, JobKey value)
         {
             BsonWriter  bsonWriter = (BsonWriter) context.Writer;
             Serialize(bsonWriter, args.NominalType, value);
-        }
-
-        public Type ValueType
-        {
-            get { return typeof(JobKey); }
         }
     }
 }

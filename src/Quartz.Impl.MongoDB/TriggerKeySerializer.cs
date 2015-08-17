@@ -5,12 +5,13 @@ using System.Text;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace Quartz.Impl.MongoDB
 {
-    public class TriggerKeySerializer : IBsonSerializer
+    public class TriggerKeySerializer : SerializerBase<TriggerKey>
     {
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public TriggerKey Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
         {
             if (nominalType != typeof(TriggerKey) || actualType != typeof(TriggerKey))
             {
@@ -23,15 +24,10 @@ namespace Quartz.Impl.MongoDB
             {
                 TriggerKey item;
 
-                string name;
-                bsonReader.ReadName("Name");
-                name = bsonReader.ReadString();
-                string group;
-                bsonReader.ReadName("Group");
-                group = bsonReader.ReadString();
-
                 bsonReader.ReadStartDocument();
-                item = new TriggerKey(name, group);
+                item = new TriggerKey(
+                    bsonReader.ReadString("Name"),
+                    bsonReader.ReadString("Group"));
                 bsonReader.ReadEndDocument();
 
                 return item;
@@ -48,7 +44,7 @@ namespace Quartz.Impl.MongoDB
             }
         }
 
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
+        public TriggerKey Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
         {
             return this.Deserialize(bsonReader, nominalType, nominalType);
         }
@@ -63,19 +59,14 @@ namespace Quartz.Impl.MongoDB
             bsonWriter.WriteEndDocument();
         }
 
-        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        public override TriggerKey Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             return Deserialize((BsonReader)context.Reader, args.NominalType);
         }
 
-        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, TriggerKey value)
         {
             Serialize((BsonWriter)context.Writer, args.NominalType, value);
-        }
-
-        public Type ValueType
-        {
-            get { return typeof(TriggerKey); }
         }
     }
 }

@@ -5,12 +5,13 @@ using System.Text;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace Quartz.Impl.MongoDB
 {
-    public class JobDataMapSerializer : IBsonSerializer
+    public class JobDataMapSerializer : SerializerBase<JobDataMap>
     {
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public JobDataMap Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
         {
             if (nominalType != typeof(JobDataMap) || actualType != typeof(JobDataMap))
             {
@@ -47,12 +48,12 @@ namespace Quartz.Impl.MongoDB
             }
         }
 
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
+        public JobDataMap Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
         {
             return this.Deserialize(bsonReader, nominalType, nominalType);
         }
 
-        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, object value)
+        public void Serialize(global::MongoDB.Bson.IO.BsonWriter bsonWriter, Type nominalType, JobDataMap value)
         {
             JobDataMap item = (JobDataMap)value;
             bsonWriter.WriteStartDocument();
@@ -67,19 +68,14 @@ namespace Quartz.Impl.MongoDB
         }
 
 
-        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        public override JobDataMap Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             return Deserialize((BsonReader)context.Reader, args.NominalType, args.NominalType);
         }
 
-        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, JobDataMap value)
         {
             Serialize((BsonWriter)context.Writer, args.NominalType, value);
-        }
-
-        public Type ValueType
-        {
-            get { return typeof(JobDataMap); }
         }
     }
 }

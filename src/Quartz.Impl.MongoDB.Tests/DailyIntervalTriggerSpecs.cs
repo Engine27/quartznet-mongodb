@@ -8,8 +8,6 @@ using System.Linq;
 
 using Quartz.Spi;
 
-using SoftwareApproach.TestingExtensions;
-
 namespace Quartz.Impl.MongoDB.Tests
 {
     public class DailyIntervalTriggerSpecs
@@ -18,21 +16,30 @@ namespace Quartz.Impl.MongoDB.Tests
         {
             private Establish context = () =>
                 {
-                    germanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
-                    SystemTime.UtcNow = () => new DateTimeOffset(new DateTime(2012, 12, 13, 23, 0, 0));
-                    var tomorrow = new DateTime(2012, 12, 14, 10, 10, 0);
-                    expectedNextFireTime = new DateTimeOffset(tomorrow, germanTimeZone.GetUtcOffset(tomorrow));
+                    try
+                    {
+                        germanTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+                        SystemTime.UtcNow = () => new DateTimeOffset(new DateTime(2012, 12, 13, 23, 0, 0));
+                        var tomorrow = new DateTime(2012, 12, 14, 10, 10, 0);
+                        expectedNextFireTime = new DateTimeOffset(tomorrow, germanTimeZone.GetUtcOffset(tomorrow));
 
-                    jobStore = new JobStore();
-                    jobStore.ClearAllSchedulingData();
+                        jobStore = new JobStore();
+                        jobStore.InstanceName = "another_instance";
+                        jobStore.ClearAllSchedulingData();
+                        
 
-                    trigger = TriggerBuilder.Create()
-                        .ForJob(jobKey)
-                        .WithDailyTimeIntervalSchedule(x => x.InTimeZone(germanTimeZone).OnEveryDay()
-                            .StartingDailyAt(new TimeOfDay(10, 10))
-                            .EndingDailyAt(new TimeOfDay(10,20)))
-                        .Build();
-                    jobDetail = JobBuilder.Create<TestJob>().WithIdentity("test").Build();
+                        trigger = TriggerBuilder.Create()
+                            .ForJob(jobKey)
+                            .WithDailyTimeIntervalSchedule(x => x.InTimeZone(germanTimeZone).OnEveryDay()
+                                .StartingDailyAt(new TimeOfDay(10, 10))
+                                .EndingDailyAt(new TimeOfDay(10, 20)))
+                            .Build();
+                        jobDetail = JobBuilder.Create<TestJob>().WithIdentity("test").Build();
+                    }
+                    catch(Exception e)
+                    {
+                        System.Console.WriteLine(e.Message);
+                    }
                 };
 
             private Because of = () => jobStore.StoreJobAndTrigger(jobDetail, (IOperableTrigger)trigger);

@@ -6,17 +6,18 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using System.Reflection;
+using MongoDB.Bson.Serialization.Serializers;
 
 namespace Quartz.Impl.MongoDB
 {
-    public class JobDetailImplSerializer : IBsonSerializer
+    public class JobDetailImplSerializer : SerializerBase<IJobDetail>
     {
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
+        public IJobDetail Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType, Type actualType)
         {
             if (!nominalType.IsAssignableFrom(typeof(JobDetailImpl)) || actualType != typeof(JobDetailImpl))
             {
                 var message = string.Format("Can't deserialize a {0} with {1}.", nominalType.FullName, this.GetType().Name);
-                throw new BsonSerializationException(message);
+//                throw new BsonSerializationException(message);
             }
 
             var bsonType = bsonReader.GetCurrentBsonType();
@@ -62,7 +63,7 @@ namespace Quartz.Impl.MongoDB
             }
         }
 
-        public object Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
+        public IJobDetail Deserialize(global::MongoDB.Bson.IO.BsonReader bsonReader, Type nominalType)
         {
             return this.Deserialize(bsonReader, nominalType, nominalType);
         }
@@ -74,6 +75,8 @@ namespace Quartz.Impl.MongoDB
 
             bsonWriter.WriteName("_id");
             BsonSerializer.Serialize<JobKey>(bsonWriter, item.Key);
+            //string jsonKey = item.Key.ToJson();
+            //bsonWriter.WriteString("_id", jsonKey);
 
             bsonWriter.WriteString("_t", "JobDetailImpl");
             bsonWriter.WriteString("_assembly", item.JobType.Assembly.FullName);
@@ -93,19 +96,14 @@ namespace Quartz.Impl.MongoDB
             bsonWriter.WriteEndDocument();
         }
 
-        public object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        public override IJobDetail Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
             return Deserialize((BsonReader)context.Reader, args.NominalType);
         }
 
-        public void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, IJobDetail value)
         {
             Serialize((BsonWriter)context.Writer, args.NominalType, value);
-        }
-
-        public Type ValueType
-        {
-            get { throw new NotImplementedException(); }
         }
     }
 }
