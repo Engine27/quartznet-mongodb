@@ -30,17 +30,6 @@ namespace Quartz.Impl.MongoDB.Tests
             // Tell quartz to schedule the job using our trigger
             scheduler.ScheduleJob(job, trigger);
 
-            //scheduler.PauseAll();
-            //Assert.IsFalse(scheduler.IsJobGroupPaused("group1"));
-            //Assert.IsTrue(scheduler.IsTriggerGroupPaused("group1"));
-
-            //scheduler.ResumeAll();
-            //Assert.IsFalse(scheduler.IsJobGroupPaused("group1"));
-            //Assert.IsFalse(scheduler.IsTriggerGroupPaused("group1"));
-
-            //scheduler.ListenerManager.AddJobListener(new DummyJobListener(new ObservableCollection<JobKey>(), new ObservableCollection<JobKey>(), new ObservableCollection<JobKey>()), KeyMatcher<JobKey>.KeyEquals(job.Key));
-
-
             // some sleep to show what's happening
             Thread.Sleep(TimeSpan.FromSeconds(10));
 
