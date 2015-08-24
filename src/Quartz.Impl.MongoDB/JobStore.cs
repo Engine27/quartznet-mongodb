@@ -54,14 +54,17 @@ namespace Quartz.Impl.MongoDB
     public class JobStore : IJobStore
     {
         private readonly object lockObject = new object();
-        private TimeSpan misfireThreshold = TimeSpan.FromSeconds(5);
+        private TimeSpan misfireThreshold = TimeSpan.FromSeconds(DEFAULT_MISFIRE_THRESHOLD);
         private ISchedulerSignaler signaler;
+        public static int DEFAULT_MISFIRE_THRESHOLD = 5;
 
         private readonly ILog log;
 
         private MongoDatabase database;
         private string instanceId;
         private string instanceName;
+        private string connectionString;
+        public static string CONNECTION_STRING_ID = "quartznet-mongodb";
 
         private MongoCollection Calendars { get { return this.database.GetCollection(instanceName + ".Calendars"); } }
         private MongoCollection Jobs { get { return this.database.GetCollection(instanceName + ".Jobs"); } }
@@ -71,7 +74,24 @@ namespace Quartz.Impl.MongoDB
         private MongoCollection BlockedJobs { get { return this.database.GetCollection(instanceName + ".BlockedJobs"); } }
         private MongoCollection Schedulers { get { return this.database.GetCollection(instanceName + ".Schedulers"); } }
 
-        public static string DefaultConnectionString { get; set; }
+        public string ConnectionString 
+        { 
+            get
+            {
+                return connectionString;
+            }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new ApplicationException("Connection string is missing for the MongoDB job store. Please check your app.config file");
+                }
+                else
+                {
+                    connectionString = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JobStore"/> class.
@@ -79,28 +99,23 @@ namespace Quartz.Impl.MongoDB
         public JobStore()
         {
             log = LogManager.GetLogger(GetType());
+            InitializeConnectionString();
+            InitializeDatabase();
+        }
 
-            string connectionString;
-
-            if( ConfigurationManager.ConnectionStrings["quartznet-mongodb"] != null )
-                connectionString = ConfigurationManager.ConnectionStrings["quartznet-mongodb"].ConnectionString;
-            else
-                connectionString = DefaultConnectionString;
-
-            //
-            // If there is no connection string to use then throw an 
-            // exception to abort construction.
-            //
-
-            if (string.IsNullOrWhiteSpace(connectionString))
-                throw new ApplicationException("Connection string is missing for the MongoDB job store.");
-
+        private void InitializeDatabase()
+        {
             lock (lockObject)
             {
-                var urlBuilder = new MongoUrlBuilder(connectionString);
+                var urlBuilder = new MongoUrlBuilder(ConnectionString);
                 var client = new MongoClient(urlBuilder.ToMongoUrl());
                 this.database = client.GetServer().GetDatabase(urlBuilder.DatabaseName);
             }
+        }
+
+        private void InitializeConnectionString()
+        {
+            ConnectionString = ConfigurationManager.ConnectionStrings[CONNECTION_STRING_ID].ConnectionString;
         }
 
         /// <summary>
@@ -111,11 +126,7 @@ namespace Quartz.Impl.MongoDB
             var myConventions = new ConventionPack();
             var idConvention = new NamedIdMemberConvention("Id", "Key");
             myConventions.Add(idConvention);
-            ConventionRegistry.Register(
-                "quartz-net-mongodb",
-                myConventions,
-                t => t.FullName.StartsWith("Quartz.")
-            );
+            ConventionRegistry.Register("quartz-net-mongodb",myConventions,t => t.FullName.StartsWith("Quartz."));
 
             BsonSerializer.RegisterSerializer(
                 typeof(JobKey),
@@ -368,8 +379,6 @@ namespace Quartz.Impl.MongoDB
         public virtual bool IsJobGroupPaused(string groupName)
         {
             return PausedJobGroups.FindOneByIdAs<BsonDocument>(groupName) == null ? false : true;
-            //var result = this.PausedJobGroups.FindOneByIdAs<BsonDocument>(groupName);
-            //return !result.Value.IsBsonNull;
         }
 
         /// <summary>
@@ -380,7 +389,6 @@ namespace Quartz.Impl.MongoDB
         public virtual bool IsTriggerGroupPaused(string groupName)
         {
             return PausedTriggerGroups.FindOneByIdAs<BsonDocument>(groupName) == null ? false : true;
-            //return !result.IsBsonNull;
         }
 
         /// <summary>
@@ -580,8 +588,7 @@ namespace Quartz.Impl.MongoDB
 
                 if (this.RetrieveJob(newTrigger.JobKey) == null)
                 {
-                    throw new JobPersistenceException("The job (" + newTrigger.JobKey +
-                                                      ") referenced by the trigger does not exist.");
+                    throw new JobPersistenceException("The job (" + newTrigger.JobKey + ") referenced by the trigger does not exist.");
                 }
 
                 var document = newTrigger.ToBsonDocument();
@@ -1276,6 +1283,9 @@ namespace Quartz.Impl.MongoDB
         /// misfire instruction will be applied.
         /// </para>
         /// </summary>
+        /// <remarks>
+        /// TODO: see tests in JobStoreTest.TestPauseJob
+        /// </remarks>
         public virtual Collection.ISet<string> ResumeJobs(GroupMatcher<JobKey> matcher)
         {
             Collection.ISet<string> resumedGroups = new Collection.HashSet<string>();
@@ -1283,11 +1293,11 @@ namespace Quartz.Impl.MongoDB
             {
                 Collection.ISet<JobKey> keys = GetJobKeys(matcher);
 
-                foreach (string pausedJobGroup in this.PausedJobGroups.FindAllAs<string>())
+                foreach (BsonDocument pausedJobGroup in this.PausedJobGroups.FindAllAs<BsonDocument>())
                 {
-                    if (matcher.CompareWithOperator.Evaluate(pausedJobGroup, matcher.CompareToValue))
+                    if (matcher.CompareWithOperator.Evaluate(pausedJobGroup.GetElement("_id").Value.AsString, matcher.CompareToValue))
                     {
-                        resumedGroups.Add(pausedJobGroup);
+                        resumedGroups.Add(pausedJobGroup.ToString());
                     }
                 }
 

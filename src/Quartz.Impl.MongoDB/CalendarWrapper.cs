@@ -22,7 +22,7 @@ namespace Quartz.Impl.MongoDB
             id = this.Name;
             idNominalType = typeof(string);
             idGenerator = null;
-
+            
             return true;
         }
 
@@ -55,7 +55,10 @@ namespace Quartz.Impl.MongoDB
 
         public Type ValueType
         {
-            get { return typeof(ICalendar); }
+            get 
+            { 
+                return typeof(ICalendar); 
+            }
         }
 
         private static string ID = "_id";
